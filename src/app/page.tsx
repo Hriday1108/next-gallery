@@ -2,8 +2,9 @@
 
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, ArrowLeft, ArrowRight, Camera } from 'lucide-react';
+import { X, ArrowLeft, ArrowRight, Camera, Search } from 'lucide-react';
 import Image from 'next/image';
 import type { Image as ImageType, Category } from '@/types';
 import { cn } from '@/lib/utils';
@@ -29,13 +30,20 @@ const initialImages: ImageType[] = [
 export default function GalleryPage() {
   const [selectedCategory, setSelectedCategory] = useState<Category | 'All'>('All');
   const [selectedImage, setSelectedImage] = useState<ImageType | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const filteredImages = useMemo(() => {
-    if (selectedCategory === 'All') {
-      return initialImages;
+    let images = initialImages;
+    if (selectedCategory !== 'All') {
+      images = images.filter((image) => image.category === selectedCategory);
     }
-    return initialImages.filter((image) => image.category === selectedCategory);
-  }, [selectedCategory]);
+    if (searchTerm) {
+      images = images.filter((image) =>
+        image.title.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    return images;
+  }, [selectedCategory, searchTerm]);
 
   const openLightbox = (image: ImageType) => {
     setSelectedImage(image);
@@ -48,6 +56,7 @@ export default function GalleryPage() {
   const navigate = (direction: 'next' | 'prev') => {
     if (!selectedImage) return;
     const currentIndex = filteredImages.findIndex(img => img.id === selectedImage.id);
+    if (currentIndex === -1) return;
     const newIndex = direction === 'next' ? (currentIndex + 1) % filteredImages.length : (currentIndex - 1 + filteredImages.length) % filteredImages.length;
     setSelectedImage(filteredImages[newIndex]);
   };
@@ -61,6 +70,18 @@ export default function GalleryPage() {
       </header>
 
       <div className="container mx-auto px-4">
+        <div className="mb-8 flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <div className="relative w-full max-w-sm">
+                <Input 
+                    placeholder="Search images..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            </div>
+        </div>
+
         <div className="flex justify-center flex-wrap gap-2 mb-8">
           <Button
             variant={selectedCategory === 'All' ? 'default' : 'outline'}
@@ -115,7 +136,7 @@ export default function GalleryPage() {
                   <Camera className="mx-auto h-12 w-12 text-muted-foreground" />
                   <h3 className="mt-4 text-lg font-medium">No images found</h3>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    There are no images in the &quot;{selectedCategory}&quot; category.
+                    Your search for &quot;{searchTerm}&quot; in &quot;{selectedCategory}&quot; did not return any results.
                   </p>
                 </motion.div>
             )}
