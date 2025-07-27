@@ -1,11 +1,11 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, ArrowLeft, ArrowRight, Camera, Search } from 'lucide-react';
+import { X, ArrowLeft, ArrowRight, Camera, Search, ImageIcon } from 'lucide-react';
 import Image from 'next/image';
 import type { Image as ImageType, Category } from '@/types';
 import { cn } from '@/lib/utils';
@@ -32,6 +32,14 @@ export default function GalleryPage() {
   const [selectedCategory, setSelectedCategory] = useState<Category | 'All'>('All');
   const [selectedImage, setSelectedImage] = useState<ImageType | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const filteredImages = useMemo(() => {
     let images = initialImages;
@@ -62,152 +70,180 @@ export default function GalleryPage() {
     setSelectedImage(filteredImages[newIndex]);
   };
 
+  if (isLoading) {
+    return (
+      <motion.div
+        initial={{ opacity: 1 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 1 }}
+        className="flex flex-col items-center justify-center min-h-screen bg-background"
+      >
+        <motion.div
+          initial={{ scale: 0.5, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 100, damping: 10, delay: 0.2 }}
+        >
+          <ImageIcon className="h-24 w-24 text-primary" />
+        </motion.div>
+        <motion.h1 
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.7, delay: 0.5 }}
+          className="text-2xl font-bold text-foreground mt-4"
+        >
+            Image Gallery Pro
+        </motion.h1>
+      </motion.div>
+    );
+  }
+
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="py-8 px-4 text-center">
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-primary">Image Gallery</h1>
-        <p className="mt-3 text-lg text-muted-foreground">Explore our collection of beautiful images.</p>
-      </header>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }}>
+      <div className="min-h-screen bg-background text-foreground">
+        <header className="py-8 px-4 text-center">
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-primary">Image Gallery</h1>
+          <p className="mt-3 text-lg text-muted-foreground">Explore our collection of beautiful images.</p>
+        </header>
 
-      <div className="container mx-auto px-4">
-        <div className="mb-8 flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <div className="relative w-full max-w-sm">
-                <Input 
-                    placeholder="Search images..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                />
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            </div>
-        </div>
-
-        <div className="flex justify-center flex-wrap gap-2 mb-8">
-          <Button
-            variant={selectedCategory === 'All' ? 'default' : 'outline'}
-            onClick={() => setSelectedCategory('All')}
-          >
-            All
-          </Button>
-          {categories.map((category) => (
-            <Button
-              key={category}
-              variant={selectedCategory === category ? 'default' : 'outline'}
-              onClick={() => setSelectedCategory(category)}
-            >
-              {category}
-            </Button>
-          ))}
-        </div>
-
-        <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          <AnimatePresence>
-            {filteredImages.length > 0 ? (
-              filteredImages.map((image) => (
-                <motion.div
-                  key={image.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ duration: 0.3 }}
-                  className="group relative overflow-hidden rounded-lg cursor-pointer"
-                  onClick={() => openLightbox(image)}
-                >
-                  <Image
-                    src={image.src}
-                    alt={image.title}
-                    width={600}
-                    height={400}
-                    data-ai-hint={image['data-ai-hint']}
-                    className="w-full h-auto object-cover aspect-square transform transition-transform duration-300 ease-in-out group-hover:scale-110"
+        <div className="container mx-auto px-4">
+          <div className="mb-8 flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <div className="relative w-full max-w-sm">
+                  <Input 
+                      placeholder="Search images..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
                   />
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
-                    <p className="text-white text-lg font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300">{image.title}</p>
-                  </div>
-                </motion.div>
-              ))
-            ) : (
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="col-span-full text-center py-16 px-6 border-2 border-dashed rounded-lg"
-                >
-                  <Camera className="mx-auto h-12 w-12 text-muted-foreground" />
-                  <h3 className="mt-4 text-lg font-medium">No images found</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Your search for &quot;{searchTerm}&quot; in &quot;{selectedCategory}&quot; did not return any results.
-                  </p>
-                </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
-      </div>
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              </div>
+          </div>
 
-      <AnimatePresence>
-        {selectedImage && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
-            onClick={closeLightbox}
-          >
-            <motion.div
-                layoutId={selectedImage.id}
-                className="relative"
-                onClick={(e) => e.stopPropagation()}
-            >
-              <Image
-                src={selectedImage.src}
-                alt={selectedImage.title}
-                width={1200}
-                height={800}
-                data-ai-hint={selectedImage['data-ai-hint']}
-                className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
-              />
-               <p className="text-white text-center mt-2 text-lg">{selectedImage.title}</p>
-            </motion.div>
-
+          <div className="flex justify-center flex-wrap gap-2 mb-8">
             <Button
-              variant="ghost"
-              size="icon"
-              className="absolute top-4 right-4 text-white hover:text-white hover:bg-white/10"
+              variant={selectedCategory === 'All' ? 'default' : 'outline'}
+              onClick={() => setSelectedCategory('All')}
+            >
+              All
+            </Button>
+            {categories.map((category) => (
+              <Button
+                key={category}
+                variant={selectedCategory === category ? 'default' : 'outline'}
+                onClick={() => setSelectedCategory(category)}
+              >
+                {category}
+              </Button>
+            ))}
+          </div>
+
+          <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <AnimatePresence>
+              {filteredImages.length > 0 ? (
+                filteredImages.map((image) => (
+                  <motion.div
+                    key={image.id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.3 }}
+                    className="group relative overflow-hidden rounded-lg cursor-pointer"
+                    onClick={() => openLightbox(image)}
+                  >
+                    <Image
+                      src={image.src}
+                      alt={image.title}
+                      width={600}
+                      height={400}
+                      data-ai-hint={image['data-ai-hint']}
+                      className="w-full h-auto object-cover aspect-square transform transition-transform duration-300 ease-in-out group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
+                      <p className="text-white text-lg font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300">{image.title}</p>
+                    </div>
+                  </motion.div>
+                ))
+              ) : (
+                  <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="col-span-full text-center py-16 px-6 border-2 border-dashed rounded-lg"
+                  >
+                    <Camera className="mx-auto h-12 w-12 text-muted-foreground" />
+                    <h3 className="mt-4 text-lg font-medium">No images found</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Your search for &quot;{searchTerm}&quot; in &quot;{selectedCategory}&quot; did not return any results.
+                    </p>
+                  </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        </div>
+
+        <AnimatePresence>
+          {selectedImage && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
               onClick={closeLightbox}
             >
-              <X size={32} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-white hover:bg-white/10"
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate('prev');
-              }}
-            >
-              <ArrowLeft size={32} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-white hover:bg-white/10"
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate('next');
-              }}
-            >
-              <ArrowRight size={32} />
-            </Button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      <footer className="text-center p-8 text-muted-foreground">
-        <p>Gallery created with Next.js and Tailwind CSS.</p>
-      </footer>
-    </div>
+              <motion.div
+                  layoutId={selectedImage.id}
+                  className="relative"
+                  onClick={(e) => e.stopPropagation()}
+              >
+                <Image
+                  src={selectedImage.src}
+                  alt={selectedImage.title}
+                  width={1200}
+                  height={800}
+                  data-ai-hint={selectedImage['data-ai-hint']}
+                  className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+                />
+                 <p className="text-white text-center mt-2 text-lg">{selectedImage.title}</p>
+              </motion.div>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-4 right-4 text-white hover:text-white hover:bg-white/10"
+                onClick={closeLightbox}
+              >
+                <X size={32} />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-white hover:bg-white/10"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate('prev');
+                }}
+              >
+                <ArrowLeft size={32} />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-white hover:bg-white/10"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate('next');
+                }}
+              >
+                <ArrowRight size={32} />
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <footer className="text-center p-8 text-muted-foreground">
+          <p>Gallery created with Next.js and Tailwind CSS.</p>
+        </footer>
+      </div>
+    </motion.div>
   );
 }
-
-    
