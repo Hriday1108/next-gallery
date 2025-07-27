@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -208,3 +209,5 @@ export default function GalleryPage() {
     </div>
   );
 }
+
+    
