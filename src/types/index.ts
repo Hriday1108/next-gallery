@@ -1,12 +1,9 @@
-export type TaskStatus = 'To Do' | 'In Progress' | 'Completed';
-export type TaskPriority = 'High' | 'Medium' | 'Low';
+export type Category = 'Nature' | 'Architecture' | 'Animals' | 'Cityscapes';
 
-export interface Task {
+export interface Image {
   id: string;
-  description: string;
-  status: TaskStatus;
-  priority: TaskPriority;
+  src: string;
+  'data-ai-hint': string;
+  title: string;
+  category: Category;
 }
-
-export const PRIORITIES: readonly TaskPriority[] = ['High', 'Medium', 'Low'];
-export const STATUSES: readonly TaskStatus[] = ['To Do', 'In Progress', 'Completed'];
